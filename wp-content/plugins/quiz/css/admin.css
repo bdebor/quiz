@@ -1,0 +1,7 @@
+#toplevel_page_quiz a[href$="edit"]{
+    display: none;
+}
+
+#toplevel_page_quiz a[href$="delete"]{
+    display: none;
+}
