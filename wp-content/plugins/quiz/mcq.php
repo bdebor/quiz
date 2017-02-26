@@ -55,16 +55,7 @@ class Quiz_Mcq
 		global $wpdb;
 
 		if(array_key_exists('q1', $_POST) == true) {
-			$contentArray = [];
-			for($i = 1; $i <= 10; $i++){
-				if($_POST['q'.$i] != null){
-					$contentArray[] = [$_POST['q'.$i], ($_POST['c'.$i.'_1']?:''), $_POST['r'.$i.'_1'], ($_POST['c'.$i.'_2']?:''), $_POST['r'.$i.'_2'], ($_POST['c'.$i.'_3']?:''), $_POST['r'.$i.'_3']];
-				}else{
-					break;
-				}
-			}
-
-			$content = json_encode($contentArray);
+			$content = $this->generateContent();
 			$wpdb->insert("{$wpdb->prefix}quiz_mcq", array('content' => $content));
 
 			wp_redirect('?page=quiz_mcq');
@@ -77,18 +68,11 @@ class Quiz_Mcq
 				<div style="border: 1px solid #000; padding: 5px;">
 					<span>Question <?= $i ?></span>
 					<input type="text" name="q<?= $i ?>"><br>
-
-					<input type="checkbox" name="c<?= $i ?>_1" value="1">
-					<span>Réponse 1</span>
-					<input type="text" name="r<?= $i ?>_1"><br>
-
-					<input type="checkbox" name="c<?= $i ?>_2" value="1">
-					<span>Réponse 2</span>
-					<input type="text" name="r<?= $i ?>_2"><br>
-
-					<input type="checkbox" name="c<?= $i ?>_3" value="1">
-					<span>Réponse 3</span>
-					<input type="text" name="r<?= $i ?>_3"><br>
+					<?php for($j = 1; $j <= 5; $j++): ?>
+						<input type="checkbox" name="c<?= $i ?>_<?= $j ?>" value="1">
+						<span>Réponse <?= $j ?></span>
+						<input type="text" name="r<?= $i ?>_<?= $j ?>"><br>
+					<?php endfor ?>
 				</div>
 			<?php endfor ?>
 			<br>
@@ -111,38 +95,25 @@ class Quiz_Mcq
 		$contentArray = json_decode($mcq->content);
 
 		if(array_key_exists('q1', $_POST) == true) {
-			$contentArray = [];
-			for($i = 1; $i <= 10; $i++){
-				if($_POST['q'.$i] != null){
-					$contentArray[] = [$_POST['q'.$i], ($_POST['c'.$i.'_1']?:''), $_POST['r'.$i.'_1'], ($_POST['c'.$i.'_2']?:''), $_POST['r'.$i.'_2'], ($_POST['c'.$i.'_3']?:''), $_POST['r'.$i.'_3']];
-				}else{
-					break;
-				}
-			}
-
-			$content = json_encode($contentArray);
+			$content = $this->generateContent();
 			$wpdb->update("{$wpdb->prefix}quiz_mcq", array('content' => $content), array( 'id' => $_GET['id'] ));
+
+			wp_redirect('?page=quiz_mcq');
 		}
 		?>
 
 		<h1>Modifier le QCM <?= $mcq->id ?></h1>
 		<form method="post" action="?page=quiz_mcq_edit&id=<?= $mcq->id ?>">
 			<?php for($i = 1; $i <= 10; $i++): ?>
+				<?php $contentItem = $contentArray[$i-1]; ?>
 				<div style="border: 1px solid #000; padding: 5px;">
 					<span>Question <?= $i ?></span>
-					<input type="text" name="q<?= $i ?>" value="<?= $contentArray[$i-1][0] ?>"><br>
-
-					<input type="checkbox" name="c<?= $i ?>_1" value="1" <?= ($contentArray[$i-1][1]?'checked':'') ?>>
-					<span>Réponse 1</span>
-					<input type="text" name="r<?= $i ?>_1" value="<?= $contentArray[$i-1][2] ?>"><br>
-
-					<input type="checkbox" name="c<?= $i ?>_2" value="1" <?= ($contentArray[$i-1][3]? 'checked':'') ?>>
-					<span>Réponse 2</span>
-					<input type="text" name="r<?= $i ?>_2" value="<?= $contentArray[$i-1][4] ?>"><br>
-
-					<input type="checkbox" name="c<?= $i ?>_3" value="1" <?= ($contentArray[$i-1][5]?'checked':'') ?>>
-					<span>Réponse 3</span>
-					<input type="text" name="r<?= $i ?>_3" value="<?= $contentArray[$i-1][6] ?>"><br>
+					<input type="text" name="q<?= $i ?>" value="<?= $contentItem->question ?>"><br>
+					<?php for($j = 1; $j <= 5; $j++): ?>
+						<input type="checkbox" name="c<?= $i ?>_<?= $j ?>" value="1" <?= ($contentItem->checks[$j-1]?'checked':'') ?>>
+						<span>Réponse <?= $j ?></span>
+						<input type="text" name="r<?= $i ?>_<?= $j ?>" value="<?= $contentItem->responses[$j-1] ?>"><br>
+					<?php endfor ?>
 				</div>
 			<?php endfor ?>
 			<br>
@@ -170,27 +141,50 @@ class Quiz_Mcq
 		$contentArray = json_decode($mcq->content);
 
 		$html = "<div>";
-		for($i = 1, $max = count($contentArray); $i <= $max ; $i++){
-			$html.= "
+		//for($i = 1, $max = count($contentArray); $i <= $max; $i++){
+		foreach($contentArray as $i => $contentItem){
+			$i2 = $i + 1;
+			$html .= "
 				<div style='border: 1px solid #000; padding: 5px;'>
-					<p>Question $i : {$contentArray[$i-1][0]}</p>
+					<p>Question $i2 : {$contentItem->question}</p>
+					";
+			foreach($contentItem->responses as $j => $response){
+				$html .= "
 					<p>
-						<input type='checkbox' name='c{$i}_1' value='1'>
-						<span>{$contentArray[$i-1][2]}</span>
+						<input type='checkbox' name='c{$i}_{$j}' value='1'>
+						<span>$response</span>
 					</p>
-					<p>
-						<input type='checkbox' name='c{$i}_2' value='1'>
-						<span>{$contentArray[$i-1][4]}</span>
-					</p>
-					<p>
-						<input type='checkbox' name='c{$i}_3' value='1'>
-						<span>{$contentArray[$i-1][6]}</span>
-					</p>
-				</div>
-			";
+					";
+			}
+			$html .= "</div>";
 		}
 		$html .= "</div>";
 
+
 		return $html;
+	}
+
+	private function generateContent()
+	{
+		$contentArray = [];
+		for($i = 1; $i <= 10; $i++){
+			if($_POST['q'.$i]){
+				$contentItem = [];
+				$contentItem['question'] = $_POST['q'.$i];
+				for($j = 1; $j <= 5; $j++){
+					if($_POST['r'.$i.'_'.$j]){
+						$contentItem['checks'][] = ($_POST['c'.$i.'_'.$j]?:'');
+						$contentItem['responses'][] = $_POST['r'.$i.'_'.$j];
+					}else{
+						break;
+					}
+				}
+				$contentArray[] = $contentItem;
+			}else{
+				break;
+			}
+		}
+
+		return json_encode($contentArray);
 	}
 }
