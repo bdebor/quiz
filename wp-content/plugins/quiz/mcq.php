@@ -214,7 +214,7 @@ class Quiz_Mcq
 						}
 					}
 
-					$html .= "<div style='border: 1px solid #000; width: 10px; height: 7px; display: inline-block; line-height: 10px; font-size: 10px; text-align: center;'>";
+					$html .= "<div style='border: 1px solid #000; width: 10px; height: 10px; display: inline-block; line-height: 7px; font-size: 10px; text-align: center;'>";
 					if($user_checks[$i][$j] === '1') {
 						$html .= "<span>x</span>";
 					}
@@ -367,11 +367,11 @@ class Quiz_Mcq
 	private function generateContent() {
 		$contentArray = [];
 		for ($i = 1; $i <= 10; $i++) {
-			if ($_POST['q' . $i] !== null) {
+			if ($_POST['q' . $i] !== '') {
 				$contentItem             = [];
 				$contentItem['question'] = $_POST['q' . $i];
 				for ($j = 1; $j <= 5; $j++) {
-					if ($_POST['r' . $i . '_' . $j] !== null) {
+					if ($_POST['r' . $i . '_' . $j] !== '') {
 						$contentItem['checks'][]    = ($_POST['c' . $i . '_' . $j] ?: '');
 						$contentItem['responses'][] = $_POST['r' . $i . '_' . $j];
 					} else {
@@ -386,4 +386,24 @@ class Quiz_Mcq
 
 		return json_encode($contentArray);
 	}
+
+//	private function generateContent() {
+//		$contentArray = [];
+//		$i = 1;
+//		while($_POST['q' . $i] !== ''){
+//			$contentItem = [];
+//			$contentItem['question'] = $_POST['q' . $i];
+//
+//			$j = 1;
+//			while($_POST['r' . $i . '_' . $j] !== ''){
+//				$contentItem['checks'][]    = ($_POST['c' . $i . '_' . $j] ?: '');
+//				$contentItem['responses'][] = $_POST['r' . $i . '_' . $j];
+//				$j ++;
+//			}
+//			$contentArray[] = $contentItem;
+//			$i++;
+//		}
+//
+//		return json_encode($contentArray);
+//	}
 }
